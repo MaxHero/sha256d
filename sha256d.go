@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package sha256 implements the SHA224 and SHA256 hash algorithms as defined
+// Package sha256d implements the SHA256d hash algorithms as defined
 // in FIPS 180-4.
 package sha256d
 
@@ -15,54 +15,37 @@ import (
 // The size of a SHA256 checksum in bytes.
 const Size = 32
 
-// The size of a SHA224 checksum in bytes.
-const Size224 = 28
-
-// The blocksize of SHA256 and SHA224 in bytes.
+// The blocksize of SHA256 in bytes.
 const BlockSize = 64
 
 const (
-	chunk     = 64
-	init0     = 0x6A09E667
-	init1     = 0xBB67AE85
-	init2     = 0x3C6EF372
-	init3     = 0xA54FF53A
-	init4     = 0x510E527F
-	init5     = 0x9B05688C
-	init6     = 0x1F83D9AB
-	init7     = 0x5BE0CD19
-	init0_224 = 0xC1059ED8
-	init1_224 = 0x367CD507
-	init2_224 = 0x3070DD17
-	init3_224 = 0xF70E5939
-	init4_224 = 0xFFC00B31
-	init5_224 = 0x68581511
-	init6_224 = 0x64F98FA7
-	init7_224 = 0xBEFA4FA4
+	chunk = 64
+	init0 = 0x6A09E667
+	init1 = 0xBB67AE85
+	init2 = 0x3C6EF372
+	init3 = 0xA54FF53A
+	init4 = 0x510E527F
+	init5 = 0x9B05688C
+	init6 = 0x1F83D9AB
+	init7 = 0x5BE0CD19
 )
 
 // digest represents the partial evaluation of a checksum.
 type digest struct {
-	h     [8]uint32
-	x     [chunk]byte
-	nx    int
-	len   uint64
-	is224 bool // mark if this digest is SHA-224
+	h   [8]uint32
+	x   [chunk]byte
+	nx  int
+	len uint64
 }
 
 const (
-	magic224      = "sha\x02"
-	magic256      = "sha\x03"
-	marshaledSize = len(magic256) + 8*4 + chunk + 8
+	magic         = "sha\x03"
+	marshaledSize = len(magic) + 8*4 + chunk + 8
 )
 
 func (d *digest) MarshalBinary() ([]byte, error) {
 	b := make([]byte, 0, marshaledSize)
-	if d.is224 {
-		b = append(b, magic224...)
-	} else {
-		b = append(b, magic256...)
-	}
+	b = append(b, magic...)
 	b = appendUint32(b, d.h[0])
 	b = appendUint32(b, d.h[1])
 	b = appendUint32(b, d.h[2])
@@ -78,13 +61,13 @@ func (d *digest) MarshalBinary() ([]byte, error) {
 }
 
 func (d *digest) UnmarshalBinary(b []byte) error {
-	if len(b) < len(magic224) || (d.is224 && string(b[:len(magic224)]) != magic224) || (!d.is224 && string(b[:len(magic256)]) != magic256) {
+	if len(b) < len(magic) || (string(b[:len(magic)]) != magic) {
 		return errors.New("crypto/sha256: invalid hash state identifier")
 	}
 	if len(b) != marshaledSize {
 		return errors.New("crypto/sha256: invalid hash state size")
 	}
-	b = b[len(magic224):]
+	b = b[len(magic):]
 	b, d.h[0] = consumeUint32(b)
 	b, d.h[1] = consumeUint32(b)
 	b, d.h[2] = consumeUint32(b)
@@ -125,25 +108,14 @@ func consumeUint32(b []byte) ([]byte, uint32) {
 }
 
 func (d *digest) Reset() {
-	if !d.is224 {
-		d.h[0] = init0
-		d.h[1] = init1
-		d.h[2] = init2
-		d.h[3] = init3
-		d.h[4] = init4
-		d.h[5] = init5
-		d.h[6] = init6
-		d.h[7] = init7
-	} else {
-		d.h[0] = init0_224
-		d.h[1] = init1_224
-		d.h[2] = init2_224
-		d.h[3] = init3_224
-		d.h[4] = init4_224
-		d.h[5] = init5_224
-		d.h[6] = init6_224
-		d.h[7] = init7_224
-	}
+	d.h[0] = init0
+	d.h[1] = init1
+	d.h[2] = init2
+	d.h[3] = init3
+	d.h[4] = init4
+	d.h[5] = init5
+	d.h[6] = init6
+	d.h[7] = init7
 	d.nx = 0
 	d.len = 0
 }
@@ -158,19 +130,8 @@ func New() hash.Hash {
 	return d
 }
 
-// New224 returns a new hash.Hash computing the SHA224 checksum.
-func New224() hash.Hash {
-	d := new(digest)
-	d.is224 = true
-	d.Reset()
-	return d
-}
-
 func (d *digest) Size() int {
-	if !d.is224 {
-		return Size
-	}
-	return Size224
+	return Size
 }
 
 func (d *digest) BlockSize() int { return BlockSize }
@@ -202,9 +163,6 @@ func (d *digest) Sum(in []byte) []byte {
 	// Make a copy of d so that caller can keep writing and summing.
 	d0 := *d
 	hash := d0.checkSum()
-	if d0.is224 {
-		return append(in, hash[:Size224]...)
-	}
 	return append(in, hash[:]...)
 }
 
@@ -237,9 +195,7 @@ func (d *digest) checkSum() [Size]byte {
 	binary.BigEndian.PutUint32(digest[16:], d.h[4])
 	binary.BigEndian.PutUint32(digest[20:], d.h[5])
 	binary.BigEndian.PutUint32(digest[24:], d.h[6])
-	if !d.is224 {
-		binary.BigEndian.PutUint32(digest[28:], d.h[7])
-	}
+	binary.BigEndian.PutUint32(digest[28:], d.h[7])
 
 	return digest
 }
@@ -250,15 +206,4 @@ func Sum256(data []byte) [Size]byte {
 	d.Reset()
 	d.Write(data)
 	return d.checkSum()
-}
-
-// Sum224 returns the SHA224 checksum of the data.
-func Sum224(data []byte) (sum224 [Size224]byte) {
-	var d digest
-	d.is224 = true
-	d.Reset()
-	d.Write(data)
-	sum := d.checkSum()
-	copy(sum224[:], sum[:Size224])
-	return
 }
