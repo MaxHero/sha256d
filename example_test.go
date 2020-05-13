@@ -6,36 +6,18 @@ package sha256d_test
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"maxhero/sha256d"
-	"os"
+	"github.com/maxhero/sha256d"
 )
 
-func ExampleSum256() {
-	sum := sha256d.Sum256([]byte("hello world\n"))
+func ExampleSum() {
+	sum := sha256d.Sum([]byte("hello world\n"))
 	fmt.Printf("%x", sum)
-	// Output: a948904f2f0f479b8f8197694b30184b0d2ed1c1cd2a1ec0fb85d299a192a447
+	// Output: f83e4b6bba3efac41f1ff56ee97adf7454680fee778924cb5ba06311d136ad1c
 }
 
 func ExampleNew() {
 	h := sha256d.New()
 	h.Write([]byte("hello world\n"))
 	fmt.Printf("%x", h.Sum(nil))
-	// Output: a948904f2f0f479b8f8197694b30184b0d2ed1c1cd2a1ec0fb85d299a192a447
-}
-
-func ExampleNew_file() {
-	f, err := os.Open("file.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	h := sha256d.New()
-	if _, err := io.Copy(h, f); err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("%x", h.Sum(nil))
+	// Output: f83e4b6bba3efac41f1ff56ee97adf7454680fee778924cb5ba06311d136ad1c
 }

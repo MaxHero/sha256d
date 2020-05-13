@@ -2,10 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build 386 || amd64 || s390x || ppc64le
 // +build 386 amd64 s390x ppc64le
 
 package sha256d
 
 //go:noescape
 
-func block(dig *digest, p []byte)
+func block(dig *Digest, p []byte)
