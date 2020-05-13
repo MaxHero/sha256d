@@ -7,16 +7,10 @@
 package sha256d
 
 import (
-	"crypto"
 	"encoding/binary"
 	"errors"
 	"hash"
 )
-
-func init() {
-	crypto.RegisterHash(crypto.SHA224, New224)
-	crypto.RegisterHash(crypto.SHA256, New)
-}
 
 // The size of a SHA256 checksum in bytes.
 const Size = 32
