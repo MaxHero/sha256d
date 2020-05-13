@@ -4,7 +4,7 @@
 
 // SHA256 hash algorithm. See FIPS 180-2.
 
-package sha256
+package sha256d
 
 import (
 	"bytes"

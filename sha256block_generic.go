@@ -4,6 +4,6 @@
 
 // +build !amd64,!386,!s390x,!ppc64le,!arm64
 
-package sha256
+package sha256d
 
 var block = blockGeneric

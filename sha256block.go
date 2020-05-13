@@ -6,7 +6,7 @@
 // In its own file so that a faster assembly or C version
 // can be substituted easily.
 
-package sha256
+package sha256d
 
 import "math/bits"
 

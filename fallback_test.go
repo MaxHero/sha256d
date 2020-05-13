@@ -4,7 +4,7 @@
 
 // +build s390x
 
-package sha256
+package sha256d
 
 import (
 	"fmt"
